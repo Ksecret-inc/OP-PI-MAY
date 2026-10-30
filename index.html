@@ -92,7 +92,29 @@
   .spin { width: 28px; height: 28px; border: 3px solid #dfe5f5; border-top-color: #2457d6; border-radius: 50%; animation: lgspin .9s linear infinite; margin: 0 auto 12px; }
   @keyframes lgspin { to { transform: rotate(360deg); } }
   @media (prefers-reduced-motion: reduce) { .spin { animation-duration: 3s; } }
-  .lg-foot { margin: 18px 0 0; padding-top: 14px; border-top: 1px solid #eef0f3; font-size: 12px; color: #98a2b3; line-height: 1.55; }
+  .lg-foot { width: 100%; margin: 18px 0 0; border-collapse: collapse; border-top: 1px solid #eef0f3; font-size: 12px; line-height: 1.55; }
+  .lg-foot th, .lg-foot td { padding: 6px 0 0; text-align: left; vertical-align: top; }
+  .lg-foot th { width: 1%; padding-right: 12px; color: #667085; font-weight: 600; white-space: nowrap; }
+  .lg-foot td { color: #98a2b3; }
+  .lg-flow { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+  .lg-flow span:not(.ar) { padding: 1px 10px; border-radius: 999px; background: #eef3ff; color: #1d4fa8; font-size: 12.5px; font-weight: 600; }
+  .lg-flow .ar { color: #98a2b3; font-weight: 700; }
+  /* ---- 사용법 창 · 권한 관리: 흐름 칩 · 표 ---- */
+  .kc { display: inline-flex; align-items: center; padding: 1px 9px; border-radius: 999px; background: #eaf0fd; color: #1d4fa8; font-size: 12px; font-weight: 600; line-height: 1.7; white-space: nowrap; }
+  .guide .g-flow { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 2px 0 4px; }
+  .guide .ar { color: #9aa3b5; font-weight: 700; }
+  .guide .g-tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .guide .g-tbl th, .guide .g-tbl td { padding: 6px 10px; border-bottom: 1px solid #e8ebf0; text-align: left; vertical-align: top; }
+  .guide .g-tbl thead th { background: #f4f6fa; color: #5d6680; font-size: 12px; font-weight: 600; }
+  .guide .g-tbl tbody th { width: 1%; color: #344054; font-weight: 700; white-space: nowrap; }
+  .guide .g-tbl tr:last-child > * { border-bottom: 0; }
+  .guide .g-task { border: 1px solid #e2e6ee; border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; font-size: 13px; }
+  .guide .g-task small { color: #667085; font-weight: 400; }
+  .guide .g-steps { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 8px; }
+  .guide .g-steps .st { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 3px; border-radius: 999px; background: #eef3ff; color: #1f2a44; font-size: 12.5px; }
+  .guide .g-steps .st i { font-style: normal; display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 50%; background: #2457d6; color: #fff; font-size: 11px; font-weight: 700; }
+  .guide .g-tip { margin: 8px 0 0; font-size: 12.5px; color: #475467; }
+  .guide #gAt { color: #667085; }
   /* ---- 상단 바: 순서 아이콘 (마우스를 올리면 단계 설명) ---- */
   .bar .steps { flex: 0 0 auto; display: inline-flex; flex-wrap: nowrap; align-items: center; gap: 3px; margin-left: 10px; padding: 0; background: none; border: 0; color: #c9cfdb; font-size: 12.5px; }
   .bar .steps .lbl { color: #c9cfdb; font-weight: 700; margin-right: 4px; white-space: nowrap; }
@@ -182,41 +204,40 @@
 
 <div class="modal-bg" id="guide" role="dialog" aria-modal="true" aria-labelledby="gTitle">
   <div class="modal guide">
-    <h3 id="gTitle">👋 처음 오셨나요? 3분 사용법</h3>
-    <p class="sub">마스터 단가표(구글시트)를 그대로 불러와서 <b>① 바이어별 단가표를 뽑고</b>, <b>② 바이어가 컨펌하면 바로 PI를 만드는</b> 도구입니다. 시트를 따로 열 필요가 없어요.</p>
+    <h3 id="gTitle">👋 3분 사용법</h3>
+    <div class="g-flow"><span class="kc">마스터 단가표 (구글시트)</span><span class="ar">→</span><span class="kc">① 바이어별 단가표</span><span class="ar">→</span><span class="kc">바이어 컨펌</span><span class="ar">→</span><span class="kc">②③ PI 생성</span></div>
 
-    <h4>화면 위쪽 탭 3개</h4>
-    <div class="tabs3">
-      <div><b>① 마진 단가표</b>바이어(등급)를 고르면 그 바이어 단가가 나와요. 브랜드를 골라 엑셀·PDF로 받을 수 있어요.</div>
-      <div><b>② PI 생성 (KSG)</b>KSECRET GLOBAL 이름으로 나가는 PI를 만들어요.</div>
-      <div><b>③ PI 생성 (AJA)</b>AJA INTERNATIONAL 이름으로 나가는 PI를 만들어요.</div>
-    </div>
+    <h4>탭 3개</h4>
+    <table class="g-tbl">
+      <thead><tr><th>탭</th><th>용도</th><th>명의</th></tr></thead>
+      <tbody>
+        <tr><th>① 마진 단가표</th><td>바이어별 단가 확인 · 엑셀 / PDF 받기</td><td>—</td></tr>
+        <tr><th>② PI 생성 (KSG)</th><td>PI 만들기</td><td>KSECRET GLOBAL</td></tr>
+        <tr><th>③ PI 생성 (AJA)</th><td>PI 만들기</td><td>AJA INTERNATIONAL</td></tr>
+      </tbody>
+    </table>
 
     <h4>자주 하는 일</h4>
-    <div class="flow"><b>📊 바이어에게 보낼 단가표 받기</b>
-      <ol>
-        <li><b>① 마진 단가표</b> 탭에서 맨 위 <b>바이어 / 등급</b>을 고릅니다.</li>
-        <li>보낼 <b>브랜드를 체크</b>합니다. (특정 품목만이면 <b>바코드 일괄 조회</b> 칸에 바코드를 붙여넣기)</li>
-        <li>맨 아래 <b>📊 엑셀(.xlsx) 저장</b> 또는 <b>📕 PDF 저장</b>을 누릅니다.</li>
-      </ol>
+    <div class="g-task"><b>📊 단가표 보내기</b>
+      <div class="g-steps"><span class="st"><i>1</i>① 탭 · 바이어 / 등급 선택</span><span class="ar">→</span><span class="st"><i>2</i>브랜드 체크 <small>(또는 바코드)</small></span><span class="ar">→</span><span class="st"><i>3</i>📊 엑셀 · 📕 PDF 저장</span></div>
     </div>
-    <div class="flow"><b>📄 PI 만들기 (바이어 컨펌 후)</b>
-      <ol>
-        <li><b>② KSG</b> 또는 <b>③ AJA</b> 탭에서 <b>Invoice NO.</b>를 적고 <b>Buyer</b>를 고릅니다. (주소·단가가 자동으로 바뀌어요)</li>
-        <li>바이어 주문서 엑셀에서 <b>[바코드 · 수량]</b> 두 열을 복사해 <b>품목 일괄 추가</b> 칸에 붙여넣고 <b>붙여넣은 품목 추가</b>를 누릅니다.</li>
-        <li><b>PI 품목 리스트</b>에서 수량·단가를 확인하고 <b>📕 PDF 저장</b>을 누르면 끝!</li>
-      </ol>
-      <p style="margin:6px 0 0">💡 ① 마진 단가표에서 품목을 고른 뒤 <b>📄 PI로 보내기</b>를 눌러도 PI로 바로 넘어갑니다.</p>
+    <div class="g-task"><b>📄 PI 만들기</b> <small>바이어 컨펌 후</small>
+      <div class="g-steps"><span class="st"><i>1</i>② / ③ 탭 · Invoice NO. · Buyer</span><span class="ar">→</span><span class="st"><i>2</i>[바코드 ⇥ 수량] 붙여넣기</span><span class="ar">→</span><span class="st"><i>3</i>품목 확인</span><span class="ar">→</span><span class="st"><i>4</i>📕 PDF 저장</span></div>
+      <p class="g-tip">💡 지름길: ① 탭에서 품목 선택 → <b>📄 PI로 보내기</b></p>
     </div>
 
-    <h4>알아두면 좋은 것</h4>
-    <div class="note"><ul>
-      <li>단가는 구글시트 기준이며, 사이트를 열 때마다 최신 시트를 불러와요. 위쪽 <b>🔄 단가 업데이트</b> 버튼을 누르면 지금 바로 다시 불러오고, 보는 중에 시트가 바뀌면 버튼이 주황색으로 바뀌어요. <span id="gAt"></span></li>
-      <li>PDF/인쇄 파일을 저장하면 그 PI가 아래쪽 <b>PI 히스토리</b>에 자동으로 남아요. 팀 전체가 같은 목록을 봅니다.</li>
-      <li>입력한 내용은 이 브라우저에 자동 저장돼요. 새로고침해도 그대로예요.</li>
-      <li>단가가 비어 있거나 0이면 시트에 그 바이어 단가가 아직 없는 품목이에요.</li>
-      <li>위쪽 <b>순서 아이콘(①②③④)</b>에 마우스를 올리면 지금 화면의 단계 설명이 나와요. 이 안내는 오른쪽 위 <b>❓ 사용법</b>으로 언제든 다시 열 수 있어요.</li>
-    </ul></div>
+    <h4>알아두기</h4>
+    <table class="g-tbl">
+      <tbody>
+        <tr><th>단가 기준</th><td>구글시트 · 열 때마다 최신 <span id="gAt"></span></td></tr>
+        <tr><th>🔄 단가 업데이트</th><td>클릭 → 바로 다시 불러오기 · 시트가 바뀌면 주황색</td></tr>
+        <tr><th>PI 히스토리</th><td>PDF · 인쇄 시 자동 저장 · 팀 공유</td></tr>
+        <tr><th>입력값</th><td>이 브라우저 자동 저장 · 새로고침해도 유지</td></tr>
+        <tr><th>단가 빈칸 · 0</th><td>시트에 그 바이어 단가 없음</td></tr>
+        <tr><th>①②③④ · ⓘ</th><td>마우스 오버 → 설명</td></tr>
+        <tr><th>❓ 사용법</th><td>이 안내 다시 열기</td></tr>
+      </tbody>
+    </table>
 
     <div class="foot">
       <label><input type="checkbox" id="gHide"> 다음부터 자동으로 띄우지 않기</label>
@@ -230,13 +251,13 @@
     <h1 id="lgTitle">KSG 단가 · PI</h1>
     <div id="lgForm">
       <form id="lgEmailStep">
-        <p class="lg-sub">등록된 회사 이메일로 로그인하세요. 메일로 6자리 코드를 보내 드려요.</p>
+        <p class="lg-sub lg-flow"><span>회사 이메일</span><span class="ar">→</span><span>6자리 코드 (메일)</span><span class="ar">→</span><span>로그인</span></p>
         <label for="lgEmail">이메일</label>
         <input id="lgEmail" type="email" autocomplete="email" placeholder="name@company.com" required>
         <button class="lg-btn" id="lgSend" type="submit">인증 코드 받기</button>
       </form>
       <form id="lgCodeStep" hidden>
-        <p class="lg-sub"><b id="lgSentTo"></b> 로 보낸 6자리 코드를 입력하세요.</p>
+        <p class="lg-sub">📧 <b id="lgSentTo"></b><br>메일로 온 6자리 코드 입력 · 10분 유효</p>
         <label for="lgCode">인증 코드</label>
         <input id="lgCode" class="lg-code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="••••••" required>
         <button class="lg-btn" id="lgVerify" type="submit">로그인</button>
@@ -255,21 +276,24 @@
       </div>
       <button type="button" class="lg-link" id="lgOut">다른 이메일로 로그인</button>
     </div>
-    <p class="lg-foot">권한이 없으면 관리자에게 이메일 등록을 요청하세요. 한 번 로그인하면 이 브라우저에서 30일 동안 유지됩니다.</p>
+    <table class="lg-foot">
+      <tr><th>권한 없음</th><td>관리자에게 이메일 등록 요청</td></tr>
+      <tr><th>로그인 유지</th><td>이 브라우저 30일</td></tr>
+    </table>
   </div>
 </div>
 
 <div class="modal-bg" id="admin" role="dialog" aria-modal="true" aria-labelledby="adTitle">
   <div class="modal adm">
     <h3 id="adTitle">👥 권한 관리</h3>
-    <p class="sub">여기에 이메일을 넣은 사람만 사이트를 볼 수 있어요. 지우면 바로 접속이 막힙니다. <a id="adSheet" target="_blank" rel="noopener">구글시트에서 직접 관리 ↗</a></p>
+    <p class="sub"><span class="kc">등록된 이메일만 접속</span> <span class="kc">삭제 → 즉시 차단</span> <a id="adSheet" target="_blank" rel="noopener">구글시트에서 직접 관리 ↗</a></p>
     <form class="add" id="adForm">
       <input id="adEmail" type="email" placeholder="이메일" required>
       <input id="adName" placeholder="이름 (선택)">
       <select id="adRole"><option>사용자</option><option>관리자</option></select>
       <button class="pri" id="adAdd" type="submit">추가</button>
     </form>
-    <label class="adm-opt"><input type="checkbox" id="adNotify" checked> 추가한 사람에게 사이트 주소 안내 메일 보내기</label>
+    <label class="adm-opt"><input type="checkbox" id="adNotify" checked> 추가 시 사이트 주소 안내 메일 보내기</label>
     <div class="adm-tbl">
       <table>
         <thead><tr><th>이메일</th><th>이름</th><th>역할</th><th>마지막 로그인</th><th></th></tr></thead>
@@ -358,9 +382,9 @@ document.getElementById('mOk').onclick = async () => {
 
 // ---- 처음 사용자 안내: 탭별 단계 안내줄 · 카드 단계 배지 · 사용법 팝업 ----
 const STEPS = {
-  margin: ['바이어 / 등급 고르기', '브랜드 체크 또는 바코드 붙여넣기', '선택한 품목 확인 (마진율 수정은 선택)', '📊 엑셀 · 📕 PDF 저장 또는 📄 PI로 보내기'],
-  ksg: ['Invoice NO. · Buyer 고르기', '바코드 · 수량 붙여넣기', '품목 리스트 확인', '📕 PDF 저장 (히스토리 자동 기록)'],
-  aja: ['Invoice NO. · Buyer 고르기', '바코드 · 수량 붙여넣기', '품목 리스트 확인', '📕 PDF 저장 (히스토리 자동 기록)']
+  margin: ['바이어 / 등급 선택', '브랜드 체크 또는 바코드 붙여넣기', '선택 품목 확인 · 마진율 수정(선택)', '📊 엑셀 · 📕 PDF 저장 / 📄 PI로 보내기'],
+  ksg: ['Invoice NO. · Buyer 선택', '바코드 · 수량 붙여넣기', '품목 리스트 확인', '📕 PDF 저장 → 히스토리 자동 기록'],
+  aja: ['Invoice NO. · Buyer 선택', '바코드 · 수량 붙여넣기', '품목 리스트 확인', '📕 PDF 저장 → 히스토리 자동 기록']
 };
 const STEP_TITLE = { margin: '단가표 순서', ksg: 'KSG PI 순서', aja: 'AJA PI 순서' };
 function renderSteps(key) {
@@ -375,8 +399,8 @@ function renderSteps(key) {
   });
 }
 const BADGES = {
-  margin: { '#setCard': [1, '바이어 / 등급을 고르세요'], '#brandCard': [2, '보낼 브랜드를 체크하세요'], '#bcCard': [2, '또는 바코드를 붙여넣으세요'], '#selCard': [3, '고른 품목이 여기 모여요 (마진율 수정은 선택)'], '#expCard': [4, '엑셀 · PDF로 저장하거나 PI로 보내세요'] },
-  pi: { '[data-card=info]': [1, 'Invoice NO.를 적고 Buyer를 고르세요'], '[data-card=scan]': [2, '바코드 · 수량을 넣으세요'], '[data-card=items]': [3, '확인 후 📕 PDF 저장'], '[data-card=history]': [0, '저장한 PI 기록 (팀 공유)'] }
+  margin: { '#setCard': [1, '바이어 / 등급 선택'], '#brandCard': [2, '브랜드 체크'], '#bcCard': [2, '또는 바코드 붙여넣기'], '#selCard': [3, '선택 품목 확인 · 마진율 수정(선택)'], '#expCard': [4, '📊 엑셀 · 📕 PDF 저장 / 📄 PI로 보내기'] },
+  pi: { '[data-card=info]': [1, 'Invoice NO. · Buyer 선택'], '[data-card=scan]': [2, '바코드 · 수량 입력'], '[data-card=items]': [3, '확인 → 📕 PDF 저장'], '[data-card=history]': [0, '저장한 PI 기록 · 팀 공유'] }
 };
 function decorate(key) {
   try {
@@ -404,7 +428,7 @@ function dataStamp() {
     if (!m) return;
     const t = new Date(m[1]).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
     document.getElementById('dataAt').textContent = '단가 기준 ' + t; document.getElementById('dataAt').title = '구글시트 ' + t + ' 수정본 기준';
-    document.getElementById('gAt').textContent = '(지금 보는 단가: ' + t + ' 시트 기준)';
+    document.getElementById('gAt').textContent = '· 지금 ' + t + ' 기준';
   } catch (e) {}
 }
 const guide = document.getElementById('guide');
@@ -516,7 +540,7 @@ function buildSrc(t, d) {
 
 async function boot() {
   $id('login').hidden = false;
-  busy('단가를 불러오는 중… 처음에는 10초쯤 걸릴 수 있어요');
+  busy('단가 불러오는 중… (처음엔 10초쯤)');
   try {
     const j = await api('load');
     ME = j.user; DATA_MOD = j.data.SHEET.mod; ADMIN_SHEET = j.adminSheet || '';
@@ -640,7 +664,7 @@ async function renderUsers() {
       }
       box.appendChild(tr);
     });
-    $id('adMsg').textContent = users.length + '명이 사이트를 볼 수 있어요.';
+    $id('adMsg').textContent = '접속 가능 ' + users.length + '명';
   } catch (e) { $id('adMsg').textContent = e.message; }
 }
 async function addUser(e) {
