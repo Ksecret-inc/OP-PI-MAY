@@ -1,0 +1,637 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" href="data:,">
+<title>KSG 단가 · PI</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: #f5f6f8; font-family: "Malgun Gothic", "Apple SD Gothic Neo", system-ui, sans-serif; color: #1d2330; }
+  body { display: flex; flex-direction: column; }
+  .bar { display: flex; align-items: center; gap: 6px; padding: 8px 16px; background: #1d2330; color: #fff; flex: 0 0 auto; }
+  .logo-img { height: 24px; width: auto; filter: invert(1); margin-right: 12px; display: block; }
+  .bar .logo { font-weight: 800; font-size: 15px; margin-right: 14px; letter-spacing: -0.2px; }
+  .tab { border: 0; background: transparent; color: #c9cfdb; font: inherit; font-size: 14px; padding: 8px 14px; border-radius: 6px; cursor: pointer; }
+  .tab:hover { background: #2c3446; color: #fff; }
+  .tab.on { background: #fff; color: #1d2330; font-weight: 700; }
+  .tab .cnt { display: inline-block; min-width: 18px; padding: 0 5px; margin-left: 6px; border-radius: 9px; background: #2457d6; color: #fff; font-size: 11px; line-height: 18px; text-align: center; }
+  .tab .cnt:empty { display: none; }
+  .bar .help { margin-left: auto; font-size: 12px; color: #9aa3b5; }
+  .frames { flex: 1 1 auto; position: relative; }
+  .frames iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: #fff; display: none; }
+  .frames iframe.on { display: block; }
+  .loading { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; color: #667085; font-size: 14px; }
+  .loading.on { display: flex; }
+  .modal-bg { position: fixed; inset: 0; background: rgba(15, 20, 30, .45); display: none; align-items: center; justify-content: center; z-index: 10; }
+  .modal-bg.on { display: flex; }
+  .modal { background: #fff; border-radius: 10px; padding: 20px 22px; width: min(440px, calc(100% - 32px)); box-shadow: 0 10px 40px rgba(0,0,0,.25); }
+  .modal h3 { margin: 0 0 4px; font-size: 16px; }
+  .modal .sub { margin: 0 0 14px; font-size: 13px; color: #667085; }
+  .modal .grp { margin-bottom: 14px; }
+  .modal .grp > b { display: block; font-size: 12.5px; color: #667085; margin-bottom: 6px; font-weight: 600; }
+  .opt { display: flex; gap: 8px; }
+  .opt label { flex: 1; border: 1px solid #e2e5ea; border-radius: 8px; padding: 9px 10px; font-size: 13.5px; cursor: pointer; display: flex; gap: 6px; align-items: center; }
+  .opt label:has(input:checked) { border-color: #2457d6; background: #eaf0ff; }
+  .modal .btns { display: flex; justify-content: flex-end; gap: 8px; margin-top: 6px; }
+  .modal button { font: inherit; font-size: 14px; padding: 8px 16px; border-radius: 6px; border: 1px solid #d0d5dd; background: #fff; cursor: pointer; }
+  .modal button.pri { background: #2457d6; border-color: #2457d6; color: #fff; font-weight: 700; }
+  @media print { .bar, .modal-bg { display: none !important; } }
+  .bar { flex-wrap: wrap; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  .tab:focus-visible { outline: 2px solid #fff; outline-offset: 1px; }
+  /* ---- 처음 사용자 가이드 ---- */
+  .bar .helpbtn { margin-left: 10px; border: 1px solid #4a5570; background: #2457d6; color: #fff; font: inherit; font-size: 13px; font-weight: 700; padding: 6px 12px; border-radius: 6px; cursor: pointer; white-space: nowrap; }
+  .bar .helpbtn:hover { background: #1b47b8; }
+  .tab .tsub { display: block; font-size: 10.5px; font-weight: 400; opacity: .75; margin-top: 1px; }
+  .steps { flex: 0 0 auto; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 4px; padding: 8px 16px; background: #eaf0ff; border-bottom: 1px solid #c9d6f7; font-size: 13px; color: #1d2330; }
+  .steps .lbl { font-weight: 800; color: #2457d6; margin-right: 6px; }
+  .steps .st { display: inline-flex; align-items: center; gap: 6px; background: #fff; border: 1px solid #c9d6f7; border-radius: 16px; padding: 3px 10px 3px 4px; }
+  .steps .st i { font-style: normal; display: inline-flex; width: 20px; height: 20px; border-radius: 50%; background: #2457d6; color: #fff; font-size: 11.5px; font-weight: 800; align-items: center; justify-content: center; }
+  .steps .ar { color: #8b97b3; }
+  .steps .x { margin-left: auto; font-size: 12px; color: #667085; }
+  .guide { width: min(720px, calc(100% - 32px)); max-height: calc(100% - 40px); overflow: auto; padding: 22px 24px; }
+  .guide h3 { font-size: 19px; margin-bottom: 4px; }
+  .guide h4 { margin: 18px 0 8px; font-size: 14.5px; color: #2457d6; }
+  .guide p, .guide li { font-size: 13.5px; line-height: 1.6; color: #344054; }
+  .guide ol, .guide ul { margin: 0; padding-left: 20px; }
+  .guide .tabs3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .guide .tabs3 div { border: 1px solid #e2e5ea; border-radius: 8px; padding: 10px; font-size: 13px; line-height: 1.5; color: #344054; }
+  .guide .tabs3 b { display: block; color: #1d2330; margin-bottom: 3px; }
+  .guide .flow { border: 1px solid #e2e5ea; border-radius: 8px; padding: 10px 14px; margin-bottom: 8px; }
+  .guide .flow > b { display: block; margin-bottom: 4px; font-size: 14px; }
+  .guide .note { background: #f5f6f8; border-radius: 8px; padding: 10px 14px; }
+  .guide kbd { display: inline-block; border: 1px solid #d0d5dd; border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; font-size: 12px; background: #fff; font-family: inherit; }
+  .guide .foot { display: flex; align-items: center; gap: 10px; margin-top: 16px; }
+  .guide .foot label { font-size: 13px; color: #667085; display: flex; gap: 6px; align-items: center; cursor: pointer; }
+  .guide .foot button { margin-left: auto; }
+  @media (max-width: 640px) { .guide .tabs3 { grid-template-columns: 1fr; } .bar .help { display: none; } }
+  @media print { .steps { display: none !important; } }
+  [hidden] { display: none !important; }
+  /* ---- 웹사이트: 로그인 화면 ---- */
+  #login { position: fixed; inset: 0; z-index: 50; background: #f5f6f8; display: flex; align-items: center; justify-content: center; padding: 16px; overflow: auto; }
+  .lg-card { width: min(400px, 100%); background: #fff; border: 1px solid #e2e5ea; border-radius: 12px; padding: 28px 26px 20px; box-shadow: 0 10px 40px rgba(15, 20, 30, .08); }
+  .lg-logo { height: 26px; width: auto; display: block; margin-bottom: 18px; }
+  .lg-card h1 { font-size: 20px; margin: 0 0 6px; letter-spacing: -0.2px; }
+  .lg-sub { margin: 0 0 16px; color: #667085; font-size: 13.5px; line-height: 1.55; }
+  .lg-sub b { color: #1d2330; word-break: break-all; }
+  .lg-card label { display: block; font-size: 12.5px; color: #667085; margin-bottom: 6px; font-weight: 600; }
+  .lg-card input { width: 100%; font: inherit; font-size: 15px; padding: 10px 12px; border: 1px solid #d0d5dd; border-radius: 8px; color: #1d2330; }
+  .lg-card input:focus { outline: 2px solid #2457d6; border-color: transparent; }
+  .lg-card .lg-code { letter-spacing: 8px; font-size: 22px; text-align: center; font-weight: 700; }
+  .lg-btn { width: 100%; margin-top: 12px; font: inherit; font-size: 15px; font-weight: 700; padding: 11px; border-radius: 8px; border: 0; background: #2457d6; color: #fff; cursor: pointer; }
+  .lg-btn:hover { background: #1b47b8; }
+  .lg-btn:disabled { opacity: .6; cursor: default; }
+  .lg-links { display: flex; justify-content: space-between; margin-top: 12px; }
+  .lg-link { background: none; border: 0; color: #2457d6; font: inherit; font-size: 13px; cursor: pointer; padding: 0; }
+  .lg-link:hover { text-decoration: underline; }
+  .lg-msg { min-height: 20px; margin-top: 12px; font-size: 13px; line-height: 1.5; color: #067647; }
+  .lg-msg.bad { color: #d92d20; }
+  .lg-busy { text-align: center; padding: 18px 0 4px; color: #344054; font-size: 14px; line-height: 1.55; }
+  .lg-busy .lg-link { margin-top: 12px; }
+  .spin { width: 28px; height: 28px; border: 3px solid #dfe5f5; border-top-color: #2457d6; border-radius: 50%; animation: lgspin .9s linear infinite; margin: 0 auto 12px; }
+  @keyframes lgspin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .spin { animation-duration: 3s; } }
+  .lg-foot { margin: 18px 0 0; padding-top: 14px; border-top: 1px solid #eef0f3; font-size: 12px; color: #98a2b3; line-height: 1.55; }
+  /* ---- 상단 바: 계정 메뉴 (권한 관리 · 로그아웃) ---- */
+  .bar .barbtn { margin-left: 6px; border: 1px solid #4a5570; background: transparent; color: #fff; font: inherit; font-size: 12.5px; padding: 6px 10px; border-radius: 6px; cursor: pointer; white-space: nowrap; max-width: 180px; overflow: hidden; text-overflow: ellipsis; }
+  .bar .barbtn:hover { background: #2c3446; }
+  .bar .barbtn.new { background: #f79009; border-color: #f79009; font-weight: 700; max-width: none; }
+  .bar .barbtn:focus-visible { outline: 2px solid #fff; outline-offset: 1px; }
+  .acct { position: relative; }
+  .acct-menu { position: absolute; right: 0; top: calc(100% + 6px); z-index: 20; min-width: 220px; padding: 6px; background: #fff; color: #1d2330; border: 1px solid #e2e5ea; border-radius: 8px; box-shadow: 0 8px 30px rgba(15, 20, 30, .18); }
+  .acct-mail { font-size: 12px; color: #667085; padding: 6px 10px 8px; margin-bottom: 4px; border-bottom: 1px solid #eef0f3; word-break: break-all; }
+  .acct-menu button { display: block; width: 100%; text-align: left; border: 0; background: none; font: inherit; font-size: 13.5px; padding: 8px 10px; border-radius: 6px; cursor: pointer; color: #1d2330; }
+  .acct-menu button:hover, .acct-menu button:focus-visible { background: #f0f2f5; outline: none; }
+  /* ---- 권한 관리 창 ---- */
+  .adm { width: min(760px, calc(100% - 32px)); max-height: calc(100% - 40px); overflow: auto; }
+  .adm .sub a { color: #2457d6; }
+  .adm .add { display: grid; grid-template-columns: 2fr 1.2fr 1fr auto; gap: 8px; margin: 4px 0 8px; }
+  .adm input, .adm select { font: inherit; font-size: 13.5px; padding: 7px 9px; border: 1px solid #d0d5dd; border-radius: 6px; min-width: 0; }
+  .adm .adm-opt { display: flex; gap: 6px; align-items: center; font-size: 12.5px; color: #667085; margin-bottom: 12px; cursor: pointer; }
+  .adm-tbl { border: 1px solid #e2e5ea; border-radius: 8px; overflow: auto; max-height: 50vh; }
+  .adm table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .adm th, .adm td { text-align: left; padding: 7px 10px; border-bottom: 1px solid #eef0f3; white-space: nowrap; }
+  .adm th { position: sticky; top: 0; background: #f8f9fb; color: #667085; font-weight: 600; font-size: 12px; }
+  .adm td.dim { color: #667085; }
+  .adm button.del { color: #d92d20; border-color: #f3c3bf; padding: 3px 10px; font-size: 12.5px; }
+  .adm .adm-msg { font-size: 12.5px; color: #667085; min-height: 18px; margin: 8px 0 0; }
+  @media (max-width: 640px) { .adm .add { grid-template-columns: 1fr 1fr; } }
+</style>
+</head>
+<body>
+<div class="bar">
+  <img class="logo-img" alt="K-SECRET" src="data:image/png;base64,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"><span class="logo">단가 · PI</span>
+  <button class="tab on" data-t="margin" title="바이어별 단가 확인 · 단가표 엑셀/PDF 다운로드">① 마진 단가표<span class="tsub">바이어별 단가 보기·다운로드</span></button>
+  <button class="tab" data-t="ksg" title="KSECRET GLOBAL 명의 PI 만들기">② PI 생성 (KSG)<span class="cnt" id="cnt-ksg"></span><span class="tsub">KSECRET GLOBAL 명의</span></button>
+  <button class="tab" data-t="aja" title="AJA INTERNATIONAL 명의 PI 만들기">③ PI 생성 (AJA)<span class="cnt" id="cnt-aja"></span><span class="tsub">AJA INTERNATIONAL 명의</span></button>
+  <span class="help" id="dataAt"></span>
+  <button class="helpbtn" id="guideBtn">❓ 처음이세요? 사용법</button>
+  <button class="barbtn new" id="reloadBtn" hidden title="보는 중에 마스터 단가 시트가 바뀌었어요">🔄 새 단가 · 새로고침</button>
+  <div class="acct">
+    <button class="barbtn" id="acctBtn" aria-haspopup="menu" aria-expanded="false"><span id="who"></span> ▾</button>
+    <div class="acct-menu" id="acctMenu" role="menu" hidden>
+      <div class="acct-mail" id="whoMail"></div>
+      <button id="adminBtn" role="menuitem" hidden>👥 권한 관리</button>
+      <button id="logoutBtn" role="menuitem">로그아웃</button>
+    </div>
+  </div>
+</div>
+<div class="steps" id="steps"></div>
+<div class="frames" id="frames">
+  <div class="loading" id="loading">불러오는 중…</div>
+</div>
+
+<div class="modal-bg" id="modal">
+  <div class="modal">
+    <h3>PI로 보내기</h3>
+    <p class="sub" id="mSub"></p>
+    <div class="grp"><b>어느 PI로 보낼까요?</b>
+      <div class="opt">
+        <label><input type="radio" name="tgt" value="ksg" checked> KSG PI</label>
+        <label><input type="radio" name="tgt" value="aja"> AJA PI</label>
+      </div>
+    </div>
+    <div class="grp" id="modeGrp"><b>이미 PI에 품목이 있어요</b>
+      <div class="opt">
+        <label><input type="radio" name="mode" value="replace" checked> 비우고 새로 만들기</label>
+        <label><input type="radio" name="mode" value="append"> 기존 품목에 추가</label>
+      </div>
+    </div>
+    <div class="btns">
+      <button id="mCancel">취소</button>
+      <button class="pri" id="mOk">보내기</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="guide" role="dialog" aria-modal="true" aria-labelledby="gTitle">
+  <div class="modal guide">
+    <h3 id="gTitle">👋 처음 오셨나요? 3분 사용법</h3>
+    <p class="sub">마스터 단가표(구글시트)를 그대로 불러와서 <b>① 바이어별 단가표를 뽑고</b>, <b>② 바이어가 컨펌하면 바로 PI를 만드는</b> 도구입니다. 시트를 따로 열 필요가 없어요.</p>
+
+    <h4>화면 위쪽 탭 3개</h4>
+    <div class="tabs3">
+      <div><b>① 마진 단가표</b>바이어(등급)를 고르면 그 바이어 단가가 나와요. 브랜드를 골라 엑셀·PDF로 받을 수 있어요.</div>
+      <div><b>② PI 생성 (KSG)</b>KSECRET GLOBAL 이름으로 나가는 PI를 만들어요.</div>
+      <div><b>③ PI 생성 (AJA)</b>AJA INTERNATIONAL 이름으로 나가는 PI를 만들어요.</div>
+    </div>
+
+    <h4>자주 하는 일</h4>
+    <div class="flow"><b>📊 바이어에게 보낼 단가표 받기</b>
+      <ol>
+        <li><b>① 마진 단가표</b> 탭에서 맨 위 <b>바이어 / 등급</b>을 고릅니다.</li>
+        <li>보낼 <b>브랜드를 체크</b>합니다. (특정 품목만이면 <b>바코드 일괄 조회</b> 칸에 바코드를 붙여넣기)</li>
+        <li>맨 아래 <b>📊 엑셀(.xlsx) 저장</b> 또는 <b>📕 PDF 저장</b>을 누릅니다.</li>
+      </ol>
+    </div>
+    <div class="flow"><b>📄 PI 만들기 (바이어 컨펌 후)</b>
+      <ol>
+        <li><b>② KSG</b> 또는 <b>③ AJA</b> 탭에서 <b>Invoice NO.</b>를 적고 <b>Buyer</b>를 고릅니다. (주소·단가가 자동으로 바뀌어요)</li>
+        <li>바이어 주문서 엑셀에서 <b>[바코드 · 수량]</b> 두 열을 복사해 <b>품목 일괄 추가</b> 칸에 붙여넣고 <b>붙여넣은 품목 추가</b>를 누릅니다.</li>
+        <li><b>PI 품목 리스트</b>에서 수량·단가를 확인하고 <b>📕 PDF 저장</b>을 누르면 끝!</li>
+      </ol>
+      <p style="margin:6px 0 0">💡 ① 마진 단가표에서 품목을 고른 뒤 <b>📄 PI로 보내기</b>를 눌러도 PI로 바로 넘어갑니다.</p>
+    </div>
+
+    <h4>알아두면 좋은 것</h4>
+    <div class="note"><ul>
+      <li>단가는 구글시트 기준이며, 사이트를 열 때마다 최신 시트를 불러와요. 보는 중에 시트가 바뀌면 위쪽에 <b>새로고침</b> 버튼이 떠요. <span id="gAt"></span></li>
+      <li>PDF/인쇄 파일을 저장하면 그 PI가 아래쪽 <b>PI 히스토리</b>에 자동으로 남아요. 팀 전체가 같은 목록을 봅니다.</li>
+      <li>입력한 내용은 이 브라우저에 자동 저장돼요. 새로고침해도 그대로예요.</li>
+      <li>단가가 비어 있거나 0이면 시트에 그 바이어 단가가 아직 없는 품목이에요.</li>
+      <li>각 화면 위의 <b>파란 단계 안내줄</b>을 따라가면 됩니다. 이 안내는 오른쪽 위 <b>❓ 사용법</b>으로 언제든 다시 열 수 있어요.</li>
+    </ul></div>
+
+    <div class="foot">
+      <label><input type="checkbox" id="gHide"> 다음부터 자동으로 띄우지 않기</label>
+      <button class="pri" id="gClose">시작하기</button>
+    </div>
+  </div>
+</div>
+<div id="login" role="dialog" aria-modal="true" aria-labelledby="lgTitle">
+  <div class="lg-card">
+    <img class="lg-logo" id="lgLogo" alt="K-SECRET">
+    <h1 id="lgTitle">KSG 단가 · PI</h1>
+    <div id="lgForm">
+      <form id="lgEmailStep">
+        <p class="lg-sub">등록된 회사 이메일로 로그인하세요. 메일로 6자리 코드를 보내 드려요.</p>
+        <label for="lgEmail">이메일</label>
+        <input id="lgEmail" type="email" autocomplete="email" placeholder="name@company.com" required>
+        <button class="lg-btn" id="lgSend" type="submit">인증 코드 받기</button>
+      </form>
+      <form id="lgCodeStep" hidden>
+        <p class="lg-sub"><b id="lgSentTo"></b> 로 보낸 6자리 코드를 입력하세요.</p>
+        <label for="lgCode">인증 코드</label>
+        <input id="lgCode" class="lg-code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="••••••" required>
+        <button class="lg-btn" id="lgVerify" type="submit">로그인</button>
+        <div class="lg-links">
+          <button type="button" class="lg-link" id="lgBack">← 이메일 바꾸기</button>
+          <button type="button" class="lg-link" id="lgResend">코드 다시 받기</button>
+        </div>
+      </form>
+      <div class="lg-msg" id="lgMsg" role="status" aria-live="polite"></div>
+    </div>
+    <div id="lgBusy" class="lg-busy" hidden>
+      <div class="spin" id="lgSpin"></div>
+      <p id="lgBusyText"></p>
+      <div id="lgRetry" hidden>
+        <button class="lg-btn" type="button">다시 시도</button>
+      </div>
+      <button type="button" class="lg-link" id="lgOut">다른 이메일로 로그인</button>
+    </div>
+    <p class="lg-foot">권한이 없으면 관리자에게 이메일 등록을 요청하세요. 한 번 로그인하면 이 브라우저에서 30일 동안 유지됩니다.</p>
+  </div>
+</div>
+
+<div class="modal-bg" id="admin" role="dialog" aria-modal="true" aria-labelledby="adTitle">
+  <div class="modal adm">
+    <h3 id="adTitle">👥 권한 관리</h3>
+    <p class="sub">여기에 이메일을 넣은 사람만 사이트를 볼 수 있어요. 지우면 바로 접속이 막힙니다. <a id="adSheet" target="_blank" rel="noopener">구글시트에서 직접 관리 ↗</a></p>
+    <form class="add" id="adForm">
+      <input id="adEmail" type="email" placeholder="이메일" required>
+      <input id="adName" placeholder="이름 (선택)">
+      <select id="adRole"><option>사용자</option><option>관리자</option></select>
+      <button class="pri" id="adAdd" type="submit">추가</button>
+    </form>
+    <label class="adm-opt"><input type="checkbox" id="adNotify" checked> 추가한 사람에게 사이트 주소 안내 메일 보내기</label>
+    <div class="adm-tbl">
+      <table>
+        <thead><tr><th>이메일</th><th>이름</th><th>역할</th><th>마지막 로그인</th><th></th></tr></thead>
+        <tbody id="adRows"></tbody>
+      </table>
+    </div>
+    <p class="adm-msg" id="adMsg"></p>
+    <div class="btns"><button id="adClose">닫기</button></div>
+  </div>
+</div>
+
+<script>
+// capability bridge: iframes call these through parent.KSG_CAPS (artifact capabilities exist only in the top frame)
+// window.KSG_CAPS 는 아래 웹사이트 셸이 만든다 (공유 PI 기록 · 로그인한 사용자)
+let SRC = {};
+const frames = {}, ready = {};
+const host = document.getElementById('frames');
+
+function ensureFrame(key) {
+  if (ready[key]) return ready[key];
+  const f = document.createElement('iframe');
+  f.title = key;
+  frames[key] = f;
+  ready[key] = new Promise(res => { f.addEventListener('load', () => res(f), { once: true }); });
+  f.srcdoc = SRC[key];
+  host.appendChild(f);
+  return ready[key];
+}
+
+let current = 'margin';
+async function show(key) {
+  current = key;
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('on', t.dataset.t === key));
+  Object.keys(frames).forEach(k => frames[k].classList.toggle('on', k === key));
+  const ld = document.getElementById('loading');
+  if (!frames[key]) ld.classList.add('on');
+  await ensureFrame(key);
+  ld.classList.remove('on');
+  if (current === key) frames[key].classList.add('on');
+  try { localStorage.setItem('ksg_hub_tab', key); } catch (e) {}
+  updateCounts();
+}
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => show(t.dataset.t)));
+
+function updateCounts() {
+  ['ksg', 'aja'].forEach(k => {
+    let n = '';
+    try { if (frames[k] && frames[k].contentWindow.piLineCount) { const c = frames[k].contentWindow.piLineCount(); n = c ? String(c) : ''; } } catch (e) {}
+    document.getElementById('cnt-' + k).textContent = n;
+  });
+}
+setInterval(updateCounts, 1500);
+
+// ---- 마진 단가표 → PI ----
+let pending = null;
+const modal = document.getElementById('modal');
+window.KSG_HUB = {
+  sendToPI(payload) {
+    pending = payload;
+    document.getElementById('mSub').textContent = `[${payload.buyerName}] ${payload.items.length.toLocaleString()}개 품목을 적용 판매가로 보냅니다.`;
+    refreshModeGrp();
+    modal.classList.add('on');
+  }
+};
+function selectedTarget() { return document.querySelector('input[name=tgt]:checked').value; }
+function refreshModeGrp() {
+  const t = selectedTarget();
+  let n = 0;
+  try { if (frames[t] && frames[t].contentWindow.piLineCount) n = frames[t].contentWindow.piLineCount(); } catch (e) {}
+  document.getElementById('modeGrp').style.display = n ? '' : 'none';
+  document.querySelector('#modeGrp b').textContent = `이미 PI에 품목이 ${n}개 있어요`;
+}
+document.querySelectorAll('input[name=tgt]').forEach(r => r.addEventListener('change', refreshModeGrp));
+document.getElementById('mCancel').onclick = () => { modal.classList.remove('on'); pending = null; };
+modal.addEventListener('click', e => { if (e.target === modal) { modal.classList.remove('on'); pending = null; } });
+document.getElementById('mOk').onclick = async () => {
+  if (!pending) return;
+  const t = selectedTarget(), payload = pending;
+  const mode = document.getElementById('modeGrp').style.display === 'none' ? 'replace' : document.querySelector('input[name=mode]:checked').value;
+  modal.classList.remove('on'); pending = null;
+  await show(t);
+  frames[t].contentWindow.importFromMargin(payload, mode);
+  updateCounts();
+};
+
+
+// ---- 처음 사용자 안내: 탭별 단계 안내줄 · 카드 단계 배지 · 사용법 팝업 ----
+const STEPS = {
+  margin: ['바이어 / 등급 고르기', '브랜드 체크 또는 바코드 붙여넣기', '선택한 품목 확인 (마진율 수정은 선택)', '📊 엑셀 · 📕 PDF 저장 또는 📄 PI로 보내기'],
+  ksg: ['Invoice NO. · Buyer 고르기', '바코드 · 수량 붙여넣기', '품목 리스트 확인', '📕 PDF 저장 (히스토리 자동 기록)'],
+  aja: ['Invoice NO. · Buyer 고르기', '바코드 · 수량 붙여넣기', '품목 리스트 확인', '📕 PDF 저장 (히스토리 자동 기록)']
+};
+const STEP_TITLE = { margin: '단가표 받는 순서', ksg: 'KSG PI 만드는 순서', aja: 'AJA PI 만드는 순서' };
+function renderSteps(key) {
+  const el = document.getElementById('steps');
+  el.textContent = '';
+  const l = document.createElement('span'); l.className = 'lbl'; l.textContent = STEP_TITLE[key] + ' :'; el.appendChild(l);
+  STEPS[key].forEach((s, i) => {
+    if (i) { const a = document.createElement('span'); a.className = 'ar'; a.textContent = '→'; el.appendChild(a); }
+    const st = document.createElement('span'); st.className = 'st';
+    const n = document.createElement('i'); n.textContent = i + 1; st.appendChild(n);
+    st.appendChild(document.createTextNode(s)); el.appendChild(st);
+  });
+}
+const BADGES = {
+  margin: { '#setCard': [1, '바이어 / 등급을 고르세요'], '#brandCard': [2, '보낼 브랜드를 체크하세요'], '#bcCard': [2, '또는 바코드를 붙여넣으세요'], '#selCard': [3, '고른 품목이 여기 모여요 (마진율 수정은 선택)'], '#expCard': [4, '엑셀 · PDF로 저장하거나 PI로 보내세요'] },
+  pi: { '[data-card=info]': [1, 'Invoice NO.를 적고 Buyer를 고르세요'], '[data-card=scan]': [2, '바코드 · 수량을 넣으세요'], '[data-card=items]': [3, '확인 후 📕 PDF 저장'], '[data-card=history]': [0, '저장한 PI 기록 (팀 공유)'] }
+};
+function decorate(key) {
+  try {
+    const d = frames[key].contentDocument;
+    if (!d || d.getElementById('ksgGuideCss')) return;
+    const css = d.createElement('style'); css.id = 'ksgGuideCss';
+    css.textContent = '.ksg-step{display:flex;align-items:center;gap:8px;margin:0 0 10px;font-size:13px;font-weight:700;color:#2457d6}.ksg-step i{font-style:normal;display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;padding:0 6px;border-radius:11px;background:#2457d6;color:#fff;font-size:12px}.ksg-step.opt i{background:#98a2b3}@media print{.ksg-step{display:none!important}}';
+    d.head.appendChild(css);
+    const map = key === 'margin' ? BADGES.margin : BADGES.pi;
+    Object.keys(map).forEach(sel => {
+      const card = d.querySelector(sel); if (!card) return;
+      const [n, txt] = map[sel];
+      const b = d.createElement('div'); b.className = 'ksg-step' + (n ? '' : ' opt');
+      const i = d.createElement('i'); i.textContent = n ? n + '단계' : '참고'; b.appendChild(i);
+      b.appendChild(d.createTextNode(txt));
+      card.insertBefore(b, card.firstChild);
+    });
+  } catch (e) {}
+}
+const _show = show;
+show = async function (key) { renderSteps(key); await _show(key); decorate(key); };
+function dataStamp() {
+  try {
+    const m = SRC.margin.match(/"mod":"([^"]+)"/);
+    if (!m) return;
+    const t = new Date(m[1]).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    document.getElementById('dataAt').textContent = '단가 기준: 구글시트 ' + t + ' 수정본';
+    document.getElementById('gAt').textContent = '(지금 보는 단가: ' + t + ' 시트 기준)';
+  } catch (e) {}
+}
+const guide = document.getElementById('guide');
+function openGuide() { guide.classList.add('on'); document.getElementById('gClose').focus(); }
+function closeGuide() {
+  guide.classList.remove('on');
+  try { if (document.getElementById('gHide').checked) localStorage.setItem('ksg_guide_seen', '1'); } catch (e) {}
+}
+document.getElementById('guideBtn').onclick = openGuide;
+document.getElementById('gClose').onclick = closeGuide;
+guide.addEventListener('click', e => { if (e.target === guide) closeGuide(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && guide.classList.contains('on')) closeGuide(); });
+// 웹사이트: 로그인하고 단가를 받은 뒤 셸이 KSG_SET_SRC → KSG_START 순서로 부른다
+window.KSG_SET_SRC = s => { SRC = s; };
+window.KSG_START = function () {
+  dataStamp();
+  try { if (!localStorage.getItem('ksg_guide_seen')) openGuide(); } catch (e) { openGuide(); }
+  let start = 'margin';
+  try { const s = localStorage.getItem('ksg_hub_tab'); if (s && SRC[s] !== undefined) start = s; } catch (e) {}
+  return show('margin').then(() => { if (start !== 'margin') return show(start); });
+};
+</script>
+<script>
+// ---- 웹사이트 셸: 이메일 코드 로그인 · 단가/화면 불러오기 · 공유 PI 기록과 사용자 기능 연결 ----
+const API_URL = 'https://script.google.com/macros/s/AKfycbw2-D-qRixlhlOGQGpTzM35KnxRK4uzSFpGyG6iXgGKQz3Zd_2EbdbR0dLIpMfQLdcj8w/exec';
+const TOKEN_KEY = 'ksgpi_token', EMAIL_KEY = 'ksgpi_email';
+const $id = id => document.getElementById(id);
+let ME = null, DATA_MOD = '', ADMIN_SHEET = '';
+
+function store(k, v) { try { v ? localStorage.setItem(k, v) : localStorage.removeItem(k); } catch (e) {} }
+function stored(k) { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } }
+
+async function api(action, body) {
+  let res, j;
+  try {
+    res = await fetch(API_URL, { method: 'POST', body: JSON.stringify(Object.assign({ action, token: stored(TOKEN_KEY) }, body || {})) });
+  } catch (e) { throw new Error('서버에 연결하지 못했어요. 인터넷 연결을 확인해 주세요.'); }
+  try { j = await res.json(); } catch (e) { throw new Error('서버 응답을 읽지 못했어요 (' + res.status + ')'); }
+  if (!j.ok) {
+    if (j.code === 'auth') { store(TOKEN_KEY, ''); ME = null; showLogin(j.error); }
+    throw new Error(j.error || '요청이 실패했어요');
+  }
+  return j;
+}
+
+// ---------- 로그인 화면 ----------
+function setMsg(t, bad) { const m = $id('lgMsg'); m.textContent = t || ''; m.className = 'lg-msg' + (bad ? ' bad' : ''); }
+function showLogin(msg) {
+  $id('login').hidden = false;
+  $id('lgBusy').hidden = true;
+  $id('lgForm').hidden = false;
+  stepEmail();
+  setMsg(msg, !!msg);
+}
+function stepEmail() {
+  $id('lgEmailStep').hidden = false; $id('lgCodeStep').hidden = true;
+  $id('lgEmail').value = $id('lgEmail').value || stored(EMAIL_KEY);
+  setTimeout(() => $id('lgEmail').focus(), 0);
+}
+function stepCode(email) {
+  $id('lgEmailStep').hidden = true; $id('lgCodeStep').hidden = false;
+  $id('lgSentTo').textContent = email;
+  $id('lgCode').value = '';
+  setTimeout(() => $id('lgCode').focus(), 0);
+}
+function busy(text, failed) {
+  $id('lgForm').hidden = true; $id('lgBusy').hidden = false;
+  $id('lgBusyText').textContent = text;
+  $id('lgSpin').hidden = !!failed; $id('lgRetry').hidden = !failed;
+}
+
+async function sendCode(e) {
+  if (e) e.preventDefault();
+  const email = $id('lgEmail').value.trim().toLowerCase();
+  if (!email) { setMsg('이메일을 입력해 주세요.', true); return; }
+  const btn = $id('lgSend'); btn.disabled = true; setMsg('코드를 보내는 중…');
+  try {
+    await api('sendCode', { email });
+    store(EMAIL_KEY, email);
+    stepCode(email);
+    setMsg('메일함을 확인해 주세요. 코드는 10분 동안 쓸 수 있어요.');
+  } catch (err) { setMsg(err.message, true); }
+  btn.disabled = false;
+}
+async function verifyCode(e) {
+  if (e) e.preventDefault();
+  const email = $id('lgSentTo').textContent, code = $id('lgCode').value.replace(/\D/g, '');
+  if (code.length !== 6) { setMsg('메일로 받은 6자리 숫자를 입력해 주세요.', true); return; }
+  const btn = $id('lgVerify'); btn.disabled = true; setMsg('확인 중…');
+  let j;
+  try { j = await api('verify', { email, code }); } catch (err) { setMsg(err.message, true); btn.disabled = false; return; }
+  btn.disabled = false;
+  store(TOKEN_KEY, j.token);
+  boot();
+}
+
+// ---------- 화면 만들기 ----------
+function js(o) { return JSON.stringify(o).replace(/<\//g, '<\\/'); }
+function buildSrc(t, d) {
+  const put = (src, ph, text) => {
+    if (src.indexOf(ph) < 0) throw new Error('화면 틀이 올바르지 않아요 (' + ph + ')');
+    return src.replace(ph, () => text);
+  };
+  const price = 'const SHEET = ' + js(d.SHEET) + ';\nconst D = ' + js(d.D) + ';\nconst BG = ' + js(d.BG) +
+    ';\nconst FIXR = ' + js(d.FIXR) + ';\nconst BDEF = ' + js(d.BDEF) + ';';
+  const items = 'const ITEMS = ' + js(d.ITEMS) + ';';
+  return { margin: put(t.margin, '/*__KSG_PRICE_DATA__*/', price), ksg: put(t.ksg, '/*__KSG_ITEMS__*/', items), aja: put(t.aja, '/*__KSG_ITEMS__*/', items) };
+}
+
+async function boot() {
+  $id('login').hidden = false;
+  busy('단가를 불러오는 중… 처음에는 10초쯤 걸릴 수 있어요');
+  try {
+    const j = await api('load');
+    ME = j.user; DATA_MOD = j.data.SHEET.mod; ADMIN_SHEET = j.adminSheet || '';
+    window.KSG_SET_SRC(buildSrc(j.templates, j.data));
+    $id('who').textContent = ME.name || ME.email.split('@')[0];
+    $id('whoMail').textContent = ME.email + (ME.role === '관리자' ? ' · 관리자' : '');
+    $id('adminBtn').hidden = ME.role !== '관리자';
+    $id('login').hidden = true;
+    await window.KSG_START();
+    setInterval(checkVersion, 5 * 60 * 1000);
+  } catch (err) {
+    if (!stored(TOKEN_KEY)) return; // 인증 오류: api()가 이미 로그인 화면으로 돌려보냄
+    ME = null;
+    busy('불러오지 못했어요: ' + err.message, true);
+  }
+}
+async function checkVersion() {
+  if (document.hidden || !ME) return;
+  try { const j = await api('version'); if (j.mod && j.mod !== DATA_MOD) $id('reloadBtn').hidden = false; } catch (e) {}
+}
+
+// ---------- 페이지들이 쓰는 기능 (window.KSG_CAPS): 공유 기록 db · user ----------
+function makeCollection(name) {
+  const subs = [];
+  let timer = null, pending = null;
+  const snap = docs => ({ docs: docs.map(d => ({ id: d.id, exists: true, data: () => d.data })), size: docs.length, empty: !docs.length });
+  const getAll = async () => snap((await api('histList', { col: name })).docs);
+  const notify = () => {
+    clearTimeout(pending);
+    pending = setTimeout(async () => {
+      if (!subs.length) return;
+      try { const s = await getAll(); subs.forEach(x => x.cb(s)); } catch (e) { subs.forEach(x => x.err && x.err(e)); }
+    }, 300);
+  };
+  return {
+    get: getAll,
+    doc(id) {
+      return {
+        id,
+        async get() { const r = await api('histGet', { col: name, id }); return { id, exists: !!r.doc, data: () => r.doc || undefined }; },
+        async set(data) { await api('histSet', { col: name, id, data }); notify(); },
+        async delete() { await api('histDel', { col: name, id }); notify(); }
+      };
+    },
+    onSnapshot(cb, err) {
+      const s = { cb, err };
+      subs.push(s); notify();
+      if (!timer) timer = setInterval(() => { if (!document.hidden) notify(); }, 60000);
+      return () => { const i = subs.indexOf(s); if (i >= 0) subs.splice(i, 1); };
+    }
+  };
+}
+const COLLECTIONS = {};
+const SHARED_DB = { collection: name => COLLECTIONS[name] || (COLLECTIONS[name] = makeCollection(name)) };
+const USER_CAP = {
+  async id() { return ME ? ME.email : ''; },
+  async profiles(ids) { return (await api('profiles', { ids })).profiles; }
+};
+window.KSG_CAPS = {
+  async use(name) {
+    if (!ME) return null;
+    if (name === 'db') return SHARED_DB;
+    if (name === 'user') return USER_CAP;
+    return null; // downloads: 페이지가 브라우저 다운로드로 저장
+  }
+};
+
+// ---------- 권한 관리 (관리자) ----------
+function cell(tr, text, cls) { const td = document.createElement('td'); td.textContent = text; if (cls) td.className = cls; tr.appendChild(td); return td; }
+async function renderUsers() {
+  const box = $id('adRows'); box.textContent = '';
+  $id('adMsg').textContent = '불러오는 중…';
+  try {
+    const { users } = await api('users');
+    users.forEach(u => {
+      const tr = document.createElement('tr');
+      cell(tr, u.email); cell(tr, u.name); cell(tr, u.role); cell(tr, u.last || '-', 'dim');
+      const td = cell(tr, '');
+      if (u.email !== ME.email) {
+        const b = document.createElement('button'); b.className = 'del'; b.textContent = '삭제';
+        b.onclick = async () => {
+          if (!confirm(u.email + ' 의 권한을 지울까요? 바로 접속이 막힙니다.')) return;
+          b.disabled = true;
+          try { await api('userDel', { email: u.email }); await renderUsers(); } catch (e) { $id('adMsg').textContent = e.message; b.disabled = false; }
+        };
+        td.appendChild(b);
+      }
+      box.appendChild(tr);
+    });
+    $id('adMsg').textContent = users.length + '명이 사이트를 볼 수 있어요.';
+  } catch (e) { $id('adMsg').textContent = e.message; }
+}
+async function addUser(e) {
+  e.preventDefault();
+  const email = $id('adEmail').value.trim(), btn = $id('adAdd');
+  if (!email) return;
+  btn.disabled = true; $id('adMsg').textContent = '추가하는 중…';
+  try {
+    await api('userAdd', { email, name: $id('adName').value.trim(), role: $id('adRole').value, notify: $id('adNotify').checked });
+    $id('adEmail').value = ''; $id('adName').value = ''; $id('adRole').value = '사용자';
+    await renderUsers();
+  } catch (err) { $id('adMsg').textContent = err.message; }
+  btn.disabled = false;
+}
+function openAdmin() { $id('admin').classList.add('on'); $id('adSheet').href = ADMIN_SHEET; renderUsers(); }
+function closeAdmin() { $id('admin').classList.remove('on'); }
+
+// ---------- 시작 ----------
+$id('lgLogo').src = document.querySelector('.logo-img').src;
+$id('lgEmailStep').addEventListener('submit', sendCode);
+$id('lgCodeStep').addEventListener('submit', verifyCode);
+$id('lgResend').onclick = () => { $id('lgEmail').value = $id('lgSentTo').textContent; sendCode(); };
+$id('lgBack').onclick = () => { setMsg(''); stepEmail(); };
+$id('logoutBtn').onclick = () => { store(TOKEN_KEY, ''); location.reload(); };
+$id('reloadBtn').onclick = () => location.reload();
+$id('lgRetry').onclick = () => boot();
+$id('lgOut').onclick = () => { store(TOKEN_KEY, ''); showLogin(); };
+function toggleAcct(open) {
+  $id('acctMenu').hidden = !open;
+  $id('acctBtn').setAttribute('aria-expanded', String(open));
+}
+$id('acctBtn').onclick = e => { e.stopPropagation(); toggleAcct($id('acctMenu').hidden); };
+document.addEventListener('click', e => { if (!e.target.closest('.acct')) toggleAcct(false); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') toggleAcct(false); });
+window.addEventListener('blur', () => toggleAcct(false)); // 아래 페이지(iframe)를 누르면 닫힘
+$id('adminBtn').onclick = () => { toggleAcct(false); openAdmin(); };
+$id('adClose').onclick = closeAdmin;
+$id('admin').addEventListener('click', e => { if (e.target === $id('admin')) closeAdmin(); });
+$id('adForm').addEventListener('submit', addUser);
+if (stored(TOKEN_KEY)) boot(); else showLogin();
+</script>
+</body>
+</html>
