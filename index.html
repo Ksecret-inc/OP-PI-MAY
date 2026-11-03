@@ -407,9 +407,25 @@ const BADGES = {
   margin: { '#setCard': [1, '바이어 / 등급 선택'], '#brandCard': [2, '브랜드 체크'], '#bcCard': [2, '또는 바코드 붙여넣기'], '#selCard': [3, '선택 품목 확인 · 마진율 수정(선택)'], '#expCard': [4, '📊 엑셀 · 📕 PDF 저장 / 📄 PI로 보내기'] },
   pi: { '[data-card=info]': [1, 'Invoice NO. · Buyer 선택'], '[data-card=scan]': [2, '바코드 · 수량 입력'], '[data-card=items]': [3, '확인 → 📕 PDF 저장'], '[data-card=history]': [0, '저장한 PI 기록 · 팀 공유'] }
 };
+// 바이어 목록을 알파벳순으로 (한글 이름은 영문 이름 기준으로 정렬, 옆에 영문 표기)
+const BUYER_EN = { '빌랄': 'Bilal', '라지크': 'Raziq', '파비즈': 'Parviz', '하산': 'Hasan', '파힘': 'Faheem' };
+function sortBuyerOptions(sel) {
+  if (!sel) return;
+  const keep = sel.value;
+  const box = sel.querySelector('optgroup') || sel;               // 마진 단가표: 첫 묶음(바이어)만, 등급 묶음은 그대로
+  const opts = [...box.querySelectorAll(':scope > option')];
+  opts.forEach(o => { const t = o.textContent.trim(); if (BUYER_EN[t]) o.textContent = t + ' (' + BUYER_EN[t] + ')'; });
+  const key = o => (BUYER_EN[o.textContent.replace(/\s*\(.*\)$/, '').trim()] || o.textContent).toUpperCase();
+  opts.sort((a, b) => key(a).localeCompare(key(b), 'en')).forEach(o => box.appendChild(o));
+  sel.value = keep;
+}
 function decorate(key) {
   try {
     const d = frames[key].contentDocument;
+    if (d && !d.getElementById('ksgBuyerSorted')) {
+      sortBuyerOptions(d.getElementById(key === 'margin' ? 'buyer' : 'buyerSelect'));
+      const mk = d.createElement('meta'); mk.id = 'ksgBuyerSorted'; d.head.appendChild(mk);
+    }
     if (!d || d.getElementById('ksgGuideCss')) return;
     const css = d.createElement('style'); css.id = 'ksgGuideCss';
     css.textContent = '.ksg-step{display:flex;align-items:center;gap:8px;margin:0 0 10px;font-size:13px;font-weight:700;color:#2457d6}.ksg-step i{font-style:normal;display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;padding:0 6px;border-radius:11px;background:#2457d6;color:#fff;font-size:12px}.ksg-step.opt i{background:#98a2b3}@media print{.ksg-step{display:none!important}}';
@@ -532,7 +548,44 @@ async function verifyCode(e) {
 
 // ---------- 화면 만들기 ----------
 function js(o) { return JSON.stringify(o).replace(/<\//g, '<\\/'); }
+// ---- 바이어 추가: HAZZA TRADING (KSA) · D GRADE 단가 ----
+// 화면 틀(t)과 데이터(d)를 받기 전에 바이어 한 명을 끝에 덧붙임. 틀 모양이 예상과 다르면 아무것도 바꾸지 않음.
+const EXTRA_BUYER = {
+  label: 'HAZZA TRADING', sheet: 'HAZZA TRADING', country: 'KSA', grade: 3, // 3 = 마진 단가표 GRADES의 'D GRADE' 열
+  company: 'HAZZA TRADING',
+  address: 'EEDF7114 7114 Jizan St - Al Thaqbah District, Al Khobar 34624 - 3412, Saudi Arabia',
+  contact: ''
+};
+function addExtraBuyer(t, d) {
+  try {
+    const B = EXTRA_BUYER, q = s => JSON.stringify(s);
+    const rxB = /(BUYERS = \[[^\]]*"AJA")\]/, rxMap = /(const PIMAP = \[[^\]]*)\]/;
+    const rxInfo = /(const BUYER_INFO = \[[\s\S]*?\})\s*,?\s*\n\];/, rxSheet = /(const BUYER_SHEET = \[[\s\S]*?\})\s*,?\s*\n\];/;
+    const ok = rxB.test(t.margin) && rxMap.test(t.margin) && ['ksg', 'aja'].every(k => rxB.test(t[k]) && rxInfo.test(t[k]) && rxSheet.test(t[k]))
+      && Array.isArray(d.BDEF) && Array.isArray(d.ITEMS) && Array.isArray(d.D);
+    if (!ok) { console.warn('바이어 추가 건너뜀: 화면 틀 모양이 달라요'); return { t, d }; }
+    const piIdx = (t.aja.match(rxB)[1].match(/"[^"]*"/g) || []).length;          // PI 화면에서 새 바이어 번호 (기존 14명 → 14)
+    if ((d.ITEMS[0] && d.ITEMS[0][12] || []).length !== piIdx) { console.warn('바이어 추가 건너뜀: 단가 열 수가 달라요'); return { t, d }; }
+    // PI 단가: 각 품목의 D GRADE 단가를 새 바이어 칸에 넣음
+    const byBc = new Map();
+    d.D.forEach(r => { const v = r && r[8] && r[8][B.grade]; if (v > 0 && !byBc.has(String(r[2]))) byBc.set(String(r[2]), v); });
+    const ITEMS = d.ITEMS.map((row, i) => {
+      const r2 = d.D[i] && String(d.D[i][2]) === String(row[0]) ? d.D[i] : null;
+      const v = r2 ? (r2[8][B.grade] > 0 ? r2[8][B.grade] : null) : (byBc.get(String(row[0])) ?? null);
+      const p = row[12].slice(); p[piIdx] = v;
+      const nr = row.slice(); nr[12] = p; return nr;
+    });
+    const BDEF = d.BDEF.concat([B.grade]);
+    const add = (src, rx, piece) => src.replace(rx, (m, a) => a + ',\n  ' + piece + '\n];');
+    const pi = src => add(add(src.replace(rxB, (m, a) => a + ',' + q(B.label) + ']'),
+      rxInfo, '{ company: ' + q(B.company) + ', address: ' + q(B.address) + ', contact: ' + q(B.contact) + ' }'),
+      rxSheet, '{ buyer: ' + q(B.sheet) + ', country: ' + q(B.country) + ' }');
+    const margin = t.margin.replace(rxB, (m, a) => a + ',' + q(B.label) + ']').replace(rxMap, (m, a) => a + ',' + piIdx + ']');
+    return { t: Object.assign({}, t, { margin, ksg: pi(t.ksg), aja: pi(t.aja) }), d: Object.assign({}, d, { ITEMS, BDEF }) };
+  } catch (e) { console.warn('바이어 추가 실패', e); return { t, d }; }
+}
 function buildSrc(t, d) {
+  ({ t, d } = addExtraBuyer(t, d));
   const put = (src, ph, text) => {
     if (src.indexOf(ph) < 0) throw new Error('화면 틀이 올바르지 않아요 (' + ph + ')');
     return src.replace(ph, () => text);
@@ -540,7 +593,9 @@ function buildSrc(t, d) {
   const price = 'const SHEET = ' + js(d.SHEET) + ';\nconst D = ' + js(d.D) + ';\nconst BG = ' + js(d.BG) +
     ';\nconst FIXR = ' + js(d.FIXR) + ';\nconst BDEF = ' + js(d.BDEF) + ';';
   const items = 'const ITEMS = ' + js(d.ITEMS) + ';';
-  return { margin: put(t.margin, '/*__KSG_PRICE_DATA__*/', price), ksg: put(t.ksg, '/*__KSG_ITEMS__*/', items), aja: put(t.aja, '/*__KSG_ITEMS__*/', items),
+  // Trade Term 기본값: FOB → FOB KOREA
+  const tt = s => s.replace('id="shippingTerms" value="FOB"', 'id="shippingTerms" value="FOB KOREA"');
+  return { margin: put(t.margin, '/*__KSG_PRICE_DATA__*/', price), ksg: tt(put(t.ksg, '/*__KSG_ITEMS__*/', items)), aja: tt(put(t.aja, '/*__KSG_ITEMS__*/', items)),
     check: CHECK_PAGE };
 }
 
