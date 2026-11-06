@@ -595,7 +595,10 @@ function buildSrc(t, d) {
   const items = 'const ITEMS = ' + js(d.ITEMS) + ';';
   // Trade Term 기본값: FOB → FOB KOREA
   const tt = s => s.replace('id="shippingTerms" value="FOB"', 'id="shippingTerms" value="FOB KOREA"');
-  return { margin: put(t.margin, '/*__KSG_PRICE_DATA__*/', price), ksg: tt(put(t.ksg, '/*__KSG_ITEMS__*/', items)), aja: tt(put(t.aja, '/*__KSG_ITEMS__*/', items)),
+  // 환율·VAT 나눔수는 항상 시트 값으로 (브라우저에 저장된 예전 환율이 남지 않게)
+  const LOAD_OLD = "function load(){ try{ const s=localStorage.getItem(KEY); if(s) Object.assign(S,JSON.parse(s)); }catch(e){} }";
+  const syncFx = s => s.indexOf(LOAD_OLD) < 0 ? s : s.replace(LOAD_OLD, () => LOAD_OLD.slice(0, -1) + ' S.fx=SHEET.fx; S.vat=SHEET.vat; }');
+  return { margin: syncFx(put(t.margin, '/*__KSG_PRICE_DATA__*/', price)), ksg: tt(put(t.ksg, '/*__KSG_ITEMS__*/', items)), aja: tt(put(t.aja, '/*__KSG_ITEMS__*/', items)),
     check: CHECK_PAGE };
 }
 
