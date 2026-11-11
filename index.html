@@ -419,9 +419,57 @@ function sortBuyerOptions(sel) {
   opts.sort((a, b) => key(a).localeCompare(key(b), 'en')).forEach(o => box.appendChild(o));
   sel.value = keep;
 }
+// PI 화면(KSG·AJA): 원화 환율 칸 + 원화 단가·합계 열 (화면 확인용, 인쇄·PDF·엑셀에는 들어가지 않음)
+function addKrw(key) {
+  try {
+    const f = frames[key], w = f.contentWindow, d = f.contentDocument;
+    if (!d || d.getElementById('krwFx') || typeof w.refreshComputed !== 'function') return;
+    const aedInp = d.getElementById('fxRate'); if (!aedInp) return;
+    const m = (SRC.margin || '').match(/"fx":([0-9.]+)/), sheetFx = m ? parseFloat(m[1]) : 0;
+    const box = d.createElement('div'); box.className = 'field';
+    box.innerHTML = '<label>KRW 환율 <span class="hint">(1 USD = ? KRW · 기본값은 시트 환율 · 아래 품목 리스트에 원화 단가·합계로 표시, 인쇄에는 안 나옴)</span></label>' +
+      '<input type="number" id="krwFx" step="0.1" min="0">';
+    aedInp.closest('.field').after(box);
+    const inp = d.getElementById('krwFx'); inp.value = sheetFx || '';
+    // 표 머리·바닥·합계 줄에 원화 칸 추가
+    const thAED = [...d.querySelectorAll('thead th')].find(th => /Total/.test(th.textContent) && /AED/.test(th.textContent));
+    if (thAED) thAED.insertAdjacentHTML('afterend', '<th style="width:90px;" class="no-print">Unit Price<br>(KRW)</th><th style="width:110px;" class="no-print">Total<br>(KRW)</th>');
+    const tdAED = d.getElementById('totalAmountAED');
+    if (tdAED) tdAED.insertAdjacentHTML('afterend', '<td class="no-print"></td><td class="no-print" id="totalAmountKRW">₩0</td>');
+    const tAED = d.getElementById('tAmountAED');
+    if (tAED) tAED.parentElement.insertAdjacentHTML('afterend', '<div class="no-print">Total Amount: <b id="tAmountKRW">₩0</b> <span style="font-weight:400;color:#667085;font-size:12px" id="tKrwNote"></span></div>');
+    const won = v => '₩' + Math.round(v || 0).toLocaleString('en-US');
+    const paint = () => {
+      const fx = parseFloat(inp.value) || 0, items = w.eval('lineItems');
+      let total = 0;
+      d.querySelectorAll('#itemsBody tr.empty-row td').forEach(td => { td.colSpan = 15; });
+      d.querySelectorAll('#itemsBody tr[data-rowid]').forEach(tr => {
+        const li = items.find(x => x.rowId === parseInt(tr.dataset.rowid, 10)); if (!li) return;
+        let u = tr.querySelector('.c-ukrw'), t = tr.querySelector('.c-tkrw');
+        if (!u) {
+          const after = tr.querySelector('.c-taed'); if (!after) return;
+          after.insertAdjacentHTML('afterend', '<td class="c-ukrw no-print"></td><td class="c-tkrw no-print"></td>');
+          u = tr.querySelector('.c-ukrw'); t = tr.querySelector('.c-tkrw');
+        }
+        const amt = (li.qty || 0) * (li.unitPriceUSD || 0) * fx;
+        u.textContent = fx ? won((li.unitPriceUSD || 0) * fx) : '-';
+        t.textContent = fx ? won(amt) : '-';
+        total += amt;
+      });
+      const tk = d.getElementById('totalAmountKRW'); if (tk) tk.textContent = fx ? won(total) : '-';
+      const tb = d.getElementById('tAmountKRW'); if (tb) tb.textContent = fx ? won(total) : '-';
+      const nt = d.getElementById('tKrwNote'); if (nt) nt.textContent = fx ? '(1 USD = ₩' + fx.toLocaleString('en-US') + (fx === sheetFx ? ' · 시트 환율' : '') + ')' : '';
+    };
+    const orig = w.refreshComputed;
+    w.refreshComputed = function () { const r = orig.apply(this, arguments); try { paint(); } catch (e) {} return r; };
+    inp.addEventListener('input', paint);
+    paint();
+  } catch (e) { console.warn('원화 환율 칸 추가 실패', e); }
+}
 function decorate(key) {
   try {
     const d = frames[key].contentDocument;
+    if (key === 'ksg' || key === 'aja') addKrw(key);
     if (d && !d.getElementById('ksgBuyerSorted')) {
       sortBuyerOptions(d.getElementById(key === 'margin' ? 'buyer' : 'buyerSelect'));
       const mk = d.createElement('meta'); mk.id = 'ksgBuyerSorted'; d.head.appendChild(mk);
