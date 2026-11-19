@@ -642,7 +642,10 @@ function buildSrc(t, d) {
     ';\nconst FIXR = ' + js(d.FIXR) + ';\nconst BDEF = ' + js(d.BDEF) + ';';
   const items = 'const ITEMS = ' + js(d.ITEMS) + ';';
   // Trade Term 기본값: FOB → FOB KOREA
-  const tt = s => s.replace('id="shippingTerms" value="FOB"', 'id="shippingTerms" value="FOB KOREA"');
+  // 입금 계좌(*Account Info.) 기본값: First Abu Dhabi Bank (2026-11-19 변경, 이전 RAK BANK)
+  const BANK_INFO = 'Account Name : A J A INTERNATIONAL GENERAL TRADING\nBank : First Abu Dhabi Bank\nAccount No. : 1001327209963001\nIBAN : AE900351001327209963001\nSWIFT : NBADAEAA';
+  const bank = s => s.replace(/<textarea id="accountInfo" rows="\d+">[^<]*<\/textarea>/, () => '<textarea id="accountInfo" rows="5">' + BANK_INFO + '</textarea>');
+  const tt = s => bank(s.replace('id="shippingTerms" value="FOB"', 'id="shippingTerms" value="FOB KOREA"'));
   // 환율·VAT 나눔수는 항상 시트 값으로 (브라우저에 저장된 예전 환율이 남지 않게)
   const LOAD_OLD = "function load(){ try{ const s=localStorage.getItem(KEY); if(s) Object.assign(S,JSON.parse(s)); }catch(e){} }";
   const syncFx = s => s.indexOf(LOAD_OLD) < 0 ? s : s.replace(LOAD_OLD, () => LOAD_OLD.slice(0, -1) + ' S.fx=SHEET.fx; S.vat=SHEET.vat; }');
