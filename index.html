@@ -604,6 +604,7 @@ const EXTRA_BUYER = {
   address: 'EEDF7114 7114 Jizan St - Al Thaqbah District, Al Khobar 34624 - 3412, Saudi Arabia',
   contact: ''
 };
+const FX_FORCE = 1335;
 function addExtraBuyer(t, d) {
   try {
     const B = EXTRA_BUYER, q = s => JSON.stringify(s);
@@ -634,6 +635,8 @@ function addExtraBuyer(t, d) {
 }
 function buildSrc(t, d) {
   ({ t, d } = addExtraBuyer(t, d));
+  // PI 생성기 환율 고정 (2026-11-19 요청: 1335원). 시트 환율(1360)은 건드리지 않고 화면에서만 적용
+  try { d = Object.assign({}, d, { SHEET: Object.assign({}, d.SHEET, { fx: FX_FORCE }) }); } catch (e) {}
   const put = (src, ph, text) => {
     if (src.indexOf(ph) < 0) throw new Error('화면 틀이 올바르지 않아요 (' + ph + ')');
     return src.replace(ph, () => text);
