@@ -648,7 +648,17 @@ function buildSrc(t, d) {
   // 입금 계좌(*Account Info.) 기본값: First Abu Dhabi Bank (2026-11-19 변경, 이전 RAK BANK)
   const BANK_INFO = 'Account Name : A J A INTERNATIONAL GENERAL TRADING\nBank : First Abu Dhabi Bank\nAccount No. : 1001327209963001\nIBAN : AE900351001327209963001\nSWIFT : NBADAEAA';
   const bank = s => s.replace(/<textarea id="accountInfo" rows="\d+">[^<]*<\/textarea>/, () => '<textarea id="accountInfo" rows="5">' + BANK_INFO + '</textarea>');
-  const tt = s => bank(s.replace('id="shippingTerms" value="FOB"', 'id="shippingTerms" value="FOB KOREA"'));
+  // 저장된 PI(히스토리)를 불러올 때: 저장 당시의 품목 순번(itemIdx)이 시트에 행이 추가되면서 어긋나 '빌랄대비(%)'가
+  // 엉뚱한 품목 기준으로 계산되던 문제 → 바코드로 현재 품목 순번을 다시 찾아 맞춤 (2026-11-25)
+  const REIDX_FN = "function reIdx(li) { if (li.manual || li.itemIdx === null || li.itemIdx === undefined) return -1; const r0 = ITEMS[li['itemIdx']]; if (r0 && r0[0] === li.barcode) return li.itemIdx; const c = []; for (let i = 0; i < ITEMS.length; i++) if (ITEMS[i][0] === li.barcode) c.push(i); if (!c.length) return -1; const n = c.find(i => ITEMS[i][2] === li.item); li.itemIdx = (n !== undefined ? n : c[0]); return li.itemIdx; }\n";
+  const fixIdx = s => {
+    if (s.indexOf('function bilalPriceOf(li) {') < 0) return s;
+    return s
+      .replace('function bilalPriceOf(li) {', () => REIDX_FN + 'function bilalPriceOf(li) {')
+      .split('ITEMS[li.itemIdx]').join('ITEMS[reIdx(li)]')
+      .replace("lineItems = JSON.parse(JSON.stringify(r.lineItems || [])).map(li => ({ ...li, overridden: true }));", () => "lineItems = JSON.parse(JSON.stringify(r.lineItems || [])).map(li => ({ ...li, overridden: true })); lineItems.forEach(li => { if (!li.manual) reIdx(li); });");
+  };
+  const tt = s => fixIdx(bank(s.replace('id="shippingTerms" value="FOB"', 'id="shippingTerms" value="FOB KOREA"')));
   // 환율·VAT 나눔수는 항상 시트 값으로 (브라우저에 저장된 예전 환율이 남지 않게)
   const LOAD_OLD = "function load(){ try{ const s=localStorage.getItem(KEY); if(s) Object.assign(S,JSON.parse(s)); }catch(e){} }";
   const syncFx = s => s.indexOf(LOAD_OLD) < 0 ? s : s.replace(LOAD_OLD, () => LOAD_OLD.slice(0, -1) + ' S.fx=SHEET.fx; S.vat=SHEET.vat; }');
